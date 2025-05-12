@@ -55,7 +55,9 @@ app.use(cookieParser());
 
 // Request logging middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  console.log('Request URL:', req.url);
+  console.log('Request method:', req.method);
+  console.log('Request path:', req.path);
   next();
 });
 
