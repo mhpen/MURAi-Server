@@ -25,13 +25,27 @@ mongoose.connection.on('disconnected', () => {
   console.log('MongoDB disconnected');
 });
 
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:4173',  // Vite preview port
+  'https://murai.vercel.app',  // Add your actual deployed frontend URL
+  'https://murai-frontend.vercel.app'
+];
+
 // Enhanced CORS configuration
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'], // Add your client URLs
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('Blocked origin:', origin); // For debugging
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Middleware
@@ -55,6 +69,15 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok',
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+// CORS test route
+app.options('*', cors()); // Enable pre-flight for all routes
+app.get('/cors-test', (req, res) => {
+  res.json({ 
+    message: 'CORS is working',
+    origin: req.headers.origin || 'No origin header'
   });
 });
 
