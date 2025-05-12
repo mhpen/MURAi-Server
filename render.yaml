@@ -1,13 +1,9 @@
 services:
   - type: web
-    name: moderation-api
+    name: content-moderation-api
     env: node
     buildCommand: npm install
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
-        value: production
-      - key: MONGODB_URI
-        sync: false
-      - key: JWT_SECRET
-        sync: false 
+        value: production 
