@@ -11,18 +11,34 @@ dotenv.config();
 
 const app = express();
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+// MongoDB connection with enhanced options
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  family: 4, // Use IPv4, skip trying IPv6
+  ssl: true,
+  tlsAllowInvalidCertificates: false,
+  retryWrites: true
+})
+.then(() => console.log('Connected to MongoDB'))
+.catch((err) => console.error('MongoDB connection error:', err));
 
-// Handle MongoDB connection errors
+// Enhanced error handling for MongoDB connection
 mongoose.connection.on('error', (err) => {
   console.error('MongoDB connection error:', err);
+  // Attempt to reconnect
+  setTimeout(() => {
+    mongoose.connect(process.env.MONGODB_URI).catch(console.error);
+  }, 5000);
 });
 
 mongoose.connection.on('disconnected', () => {
-  console.log('MongoDB disconnected');
+  console.log('MongoDB disconnected. Attempting to reconnect...');
+  setTimeout(() => {
+    mongoose.connect(process.env.MONGODB_URI).catch(console.error);
+  }, 5000);
 });
 
 // Enhanced CORS configuration
