@@ -6,6 +6,7 @@ import reportRoutes from './report.routes.js';
 import analyticsRoutes from './analytics.routes.js';
 import modelRoutes from './model.routes.js';
 import systemRoutes from './system.routes.js';
+import adminRoutes from './admin.routes.js';
 
 const router = Router();
 
@@ -17,10 +18,11 @@ router.use('/reports', reportRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/model', modelRoutes);
 router.use('/system', systemRoutes);
+router.use('/admin', adminRoutes);
 
 // Test route
 router.get('/test', (req, res) => {
-  res.json({ message: 'API routes are working' });
+  res.json({ message: 'API is working' });
 });
 
 export default router; 

@@ -6,9 +6,12 @@ import routes from './routes/index.js';
 import adminRoutes from './routes/admin.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import dotenv from 'dotenv';
-import { validateRoute } from './middleware/validateRoute.js';
+import { corsMiddleware } from './middleware/corsMiddleware.js';
 
 dotenv.config();
+
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://murai.vercel.app';
+
 
 const app = express();
 
@@ -26,37 +29,34 @@ mongoose.connection.on('disconnected', () => {
   console.log('MongoDB disconnected');
 });
 
-// Enhanced CORS configuration
-const corsOptions = {
-  origin: (origin, callback) => {
-    const allowedOrigins = [
-      'https://murai.vercel.app',
-      'http://localhost:5173',
-      'http://localhost:3000'
-    ];
-    
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+// Middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'", FRONTEND_URL],
+      connectSrc: ["'self'", FRONTEND_URL],
+      frameSrc: ["'self'", FRONTEND_URL],
+      imgSrc: ["'self'", "data:", "blob:"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      frameAncestors: ["'self'", FRONTEND_URL]
     }
   },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// Use the corsMiddleware instead of duplicate CORS config
+app.use(cors({
+  origin: FRONTEND_URL,
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Authorization'],
-  maxAge: 86400 // 24 hours
-};
+  optionsSuccessStatus: 200
+}));
 
-app.use(cors(corsOptions));
-
-// Pre-flight requests
-app.options('*', cors(corsOptions));
+app.use(corsMiddleware);
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
@@ -66,31 +66,18 @@ app.use(cookieParser());
 // Request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
   next();
 });
 
-// Add route validation middleware
-app.use(validateRoute);
+// API routes
+app.use('/api/auth', authRoutes);
+app.use('/api', routes);
+app.use('/api/admin', adminRoutes);
 
-// API routes - Update the order and remove duplicates
-app.use('/api/auth', authRoutes);  // Mount auth routes first
-app.use('/api/admin', adminRoutes); // Mount admin routes second
-app.use('/api', routes);  // Mount all other routes last
-
-// Move test route under /api
-app.get('/api/test', (req, res) => {
-  res.json({ message: 'API is working' });
-});
-
-// Keep health check route at root level
+// Health check route
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
 });
