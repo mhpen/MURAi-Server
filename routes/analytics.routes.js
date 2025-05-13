@@ -8,6 +8,11 @@ import {
 
 const router = Router();
 
+// Error handling wrapper
+const asyncHandler = fn => (req, res, next) => {
+  Promise.resolve(fn(req, res, next)).catch(next);
+};
+
 // Get overall analytics
 router.get('/', [auth, isAdmin], getAnalytics);
 
@@ -28,6 +33,6 @@ router.get('/categories', [auth, isAdmin], async (req, res) => {
 router.get('/date-range', [auth, isAdmin], getAnalyticsByDateRange);
 
 // Get bubble chart data
-router.get('/bubble-chart', getBubbleChartData);
+router.get('/bubble-chart', asyncHandler(getBubbleChartData));
 
 export default router; 

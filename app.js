@@ -6,6 +6,7 @@ import routes from './routes/index.js';
 import adminRoutes from './routes/admin.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import dotenv from 'dotenv';
+import { validateRoute } from './middleware/validateRoute.js';
 
 dotenv.config();
 
@@ -71,17 +72,20 @@ app.use((req, res, next) => {
   next();
 });
 
-// API routes
-app.use('/api/auth', authRoutes);
-app.use('/api', routes);
-app.use('/api/admin', adminRoutes);
+// Add route validation middleware
+app.use(validateRoute);
 
-// Add a test route to verify API is working
+// API routes - Update the order and remove duplicates
+app.use('/api/auth', authRoutes);  // Mount auth routes first
+app.use('/api/admin', adminRoutes); // Mount admin routes second
+app.use('/api', routes);  // Mount all other routes last
+
+// Move test route under /api
 app.get('/api/test', (req, res) => {
   res.json({ message: 'API is working' });
 });
 
-// Health check route
+// Keep health check route at root level
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok',
