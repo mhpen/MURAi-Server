@@ -47,17 +47,34 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Use the corsMiddleware instead of duplicate CORS config
+// Enhanced CORS configuration for development
 app.use(cors({
-  origin: FRONTEND_URL,
+  origin: process.env.NODE_ENV === 'development' ? ['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174'] : FRONTEND_URL,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   exposedHeaders: ['Authorization'],
   optionsSuccessStatus: 200
 }));
 
-app.use(corsMiddleware);
+// Additional CORS headers for development
+if (process.env.NODE_ENV === 'development') {
+  app.use((req, res, next) => {
+    // Allow requests from any origin in development
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+} else {
+  app.use(corsMiddleware);
+}
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
@@ -77,7 +94,7 @@ app.use('/api/admin', adminRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'ok',
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });

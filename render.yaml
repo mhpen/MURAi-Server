@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: murai-server
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://murai.vercel.app
+      - key: APP_URL
+        value: https://murai-qgd8.onrender.com
+      - key: MODEL_SERVICE_URL
+        value: https://murai-model-service.onrender.com
+      - key: JWT_SECRET
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: MICROSERVICE_API_KEY
+        sync: false

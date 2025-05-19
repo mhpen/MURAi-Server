@@ -18,7 +18,7 @@ router.post('/text', auth, async (req, res) => {
     }
 
     // Call the microservice
-    const response = await axios.post('http://127.0.0.1:8000/predict', {
+    const response = await axios.post(`${MODEL_SERVICE_URL}/predict`, {
       text,
       model // Pass the model parameter if provided
     });
@@ -85,7 +85,7 @@ router.post('/test', async (req, res) => {
     }
 
     // Call the microservice
-    const response = await axios.post('http://127.0.0.1:8000/predict', {
+    const response = await axios.post(`${MODEL_SERVICE_URL}/predict`, {
       text,
       model // Pass the model parameter if provided
     });
