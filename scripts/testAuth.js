@@ -22,7 +22,7 @@ const testAuth = async () => {
     console.log('Attempting login...');
     const loginResponse = await axios.post(`${API_URL}/api/auth/login`, {
       email: 'admin@murai.com',
-      password: 'admin123'
+      password: process.env.ADMIN_PASSWORD || 'admin123'
     });
 
     console.log('Login successful!');

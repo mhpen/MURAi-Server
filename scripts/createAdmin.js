@@ -16,11 +16,13 @@ const createAdminUser = async () => {
     console.log('Cleaned up any existing admin user');
 
     // Create admin user with specific ID
+    // Note: In production, you should use a more secure password
+    // This is just a placeholder for development
     const adminUser = new User({
       _id: "682326f43e664b30bd65d1d7",
       name: 'Admin',
       email: 'admin@murai.com',
-      password: 'admin123', // Will be hashed by schema
+      password: process.env.ADMIN_PASSWORD || 'admin123', // Will be hashed by schema
       role: 'admin',
       account_status: 'active'
     });
@@ -58,4 +60,4 @@ if (process.argv[1] === new URL(import.meta.url).pathname) {
     });
 }
 
-export default createAdminUser; 
+export default createAdminUser;

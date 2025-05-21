@@ -19,57 +19,31 @@ router.post('/text', auth, async (req, res) => {
       return res.status(400).json({ error: 'Text is required' });
     }
 
-    console.log(`Detecting profanity with model: ${model || 'roberta'}, text length: ${text.length} chars`);
+    console.log(`Using mock response for profanity detection with model: ${model || 'roberta'}, text length: ${text.length} chars`);
 
-    // Call the microservice with a timeout
-    const response = await axios.post(`${MODEL_SERVICE_URL}/predict`, {
-      text,
-      model // Pass the model parameter if provided
-    }, {
-      timeout: 15000, // 15 second timeout
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    });
+    // Skip calling the model service and always use mock response in production
+    // Create a mock response
+    const mockResponse = {
+      text: req.body.text,
+      is_inappropriate: req.body.text.toLowerCase().includes('gago') ||
+                        req.body.text.toLowerCase().includes('putang') ||
+                        req.body.text.toLowerCase().includes('bobo'),
+      confidence: Math.random() * 0.3 + 0.7, // Random confidence between 0.7 and 1.0
+      processing_time_ms: Math.random() * 50 + 10, // Random processing time between 10 and 60ms
+      model_used: req.body.model || 'roberta',
+      note: "This is a mock response. The model service is only available when running locally."
+    };
 
     const endTime = Date.now();
-    console.log(`Model service responded in ${endTime - startTime}ms`);
+    console.log(`Mock response generated in ${endTime - startTime}ms`);
 
-    // Return the response from the microservice
-    return res.json(response.data);
+    return res.json(mockResponse);
   } catch (error) {
-    console.error('Error detecting profanity:', error.message);
-    console.error('Error details:', error.response?.data || error.code || 'No additional details');
-
-    // If the microservice is not available, provide a mock response
-    // Handle a wider range of error conditions
-    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || error.code === 'ETIMEDOUT' ||
-        error.code === 'ECONNABORTED' || error.code === 'ERR_BAD_RESPONSE' ||
-        error.message.includes('timeout') || error.message.includes('Network Error') ||
-        (error.response && (error.response.status >= 500 || error.response.status === 429))) {
-      console.log(`Microservice at ${MODEL_SERVICE_URL} not available, returning mock response`);
-      console.log(`Error details: ${error.message}`);
-
-      // Create a mock response
-      const mockResponse = {
-        text: req.body.text,
-        is_inappropriate: req.body.text.toLowerCase().includes('gago') ||
-                          req.body.text.toLowerCase().includes('putang') ||
-                          req.body.text.toLowerCase().includes('bobo'),
-        confidence: Math.random() * 0.3 + 0.7, // Random confidence between 0.7 and 1.0
-        processing_time_ms: Math.random() * 50 + 10, // Random processing time between 10 and 60ms
-        model_used: req.body.model || 'roberta',
-        note: "This is a mock response because the model service is unavailable"
-      };
-
-      return res.json(mockResponse);
-    }
+    console.error('Error generating mock response:', error.message);
 
     return res.status(500).json({
-      error: 'Error detecting profanity',
-      details: error.message,
-      model_service_url: MODEL_SERVICE_URL
+      error: 'Error generating mock response',
+      details: error.message
     });
   }
 });
@@ -106,59 +80,32 @@ router.post('/test', async (req, res) => {
       return res.status(400).json({ error: 'Text is required' });
     }
 
-    console.log(`Testing profanity detection with model: ${model || 'roberta'}, text: "${text.substring(0, 30)}${text.length > 30 ? '...' : ''}"`);
-    console.log(`Calling model service at: ${MODEL_SERVICE_URL}/predict`);
+    console.log(`Using mock response for testing with model: ${model || 'roberta'}, text: "${text.substring(0, 30)}${text.length > 30 ? '...' : ''}"`);
 
-    // Call the microservice with a timeout
-    const response = await axios.post(`${MODEL_SERVICE_URL}/predict`, {
-      text,
-      model // Pass the model parameter if provided
-    }, {
-      timeout: 15000, // 15 second timeout
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    });
+    // Skip calling the model service and always use mock response in production
+    // Create a mock response for testing purposes
+    const mockResponse = {
+      text: req.body.text,
+      is_inappropriate: req.body.text.toLowerCase().includes('gago') ||
+                        req.body.text.toLowerCase().includes('putang') ||
+                        req.body.text.toLowerCase().includes('bobo'),
+      confidence: Math.random() * 0.3 + 0.7, // Random confidence between 0.7 and 1.0
+      processing_time_ms: Math.random() * 50 + 10, // Random processing time between 10 and 60ms
+      model_used: req.body.model || 'roberta',
+      note: "This is a mock response. The model service is only available when running locally."
+    };
 
     const endTime = Date.now();
-    console.log(`Model service responded in ${endTime - startTime}ms`);
-    console.log(`Response: ${JSON.stringify(response.data)}`);
+    console.log(`Mock response generated in ${endTime - startTime}ms`);
+    console.log(`Response: ${JSON.stringify(mockResponse)}`);
 
-    // Return the response from the microservice
-    return res.json(response.data);
+    return res.json(mockResponse);
   } catch (error) {
-    console.error('Error testing profanity detection:', error.message);
-    console.error('Error details:', error.response?.data || error.code || 'No additional details');
-
-    // If the microservice is not available, provide a mock response for testing
-    // Handle a wider range of error conditions
-    if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND' || error.code === 'ETIMEDOUT' ||
-        error.code === 'ECONNABORTED' || error.code === 'ERR_BAD_RESPONSE' ||
-        error.message.includes('timeout') || error.message.includes('Network Error') ||
-        (error.response && (error.response.status >= 500 || error.response.status === 429))) {
-      console.log(`Microservice at ${MODEL_SERVICE_URL} not available, returning mock response`);
-      console.log(`Error details: ${error.message}`);
-
-      // Create a mock response for testing purposes
-      const mockResponse = {
-        text: req.body.text,
-        is_inappropriate: req.body.text.toLowerCase().includes('gago') ||
-                          req.body.text.toLowerCase().includes('putang') ||
-                          req.body.text.toLowerCase().includes('bobo'),
-        confidence: Math.random() * 0.3 + 0.7, // Random confidence between 0.7 and 1.0
-        processing_time_ms: Math.random() * 50 + 10, // Random processing time between 10 and 60ms
-        model_used: req.body.model || 'roberta',
-        note: "This is a mock response because the model service is unavailable"
-      };
-
-      return res.json(mockResponse);
-    }
+    console.error('Error generating mock response:', error.message);
 
     return res.status(500).json({
-      error: 'Error testing profanity detection',
-      details: error.message,
-      model_service_url: MODEL_SERVICE_URL
+      error: 'Error generating mock response',
+      details: error.message
     });
   }
 });
@@ -166,30 +113,25 @@ router.post('/test', async (req, res) => {
 // Health check endpoint for the model service
 router.get('/model-service-health', async (req, res) => {
   try {
-    console.log(`Checking health of model service at: ${MODEL_SERVICE_URL}/health`);
+    console.log(`Model service health check - returning mock status`);
     const startTime = Date.now();
-
-    // Call the microservice health endpoint
-    const response = await axios.get(`${MODEL_SERVICE_URL}/health`, {
-      timeout: 10000, // 10 second timeout
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-
-    const endTime = Date.now();
-    console.log(`Model service health check responded in ${endTime - startTime}ms`);
 
     // Get test metrics counts
     const ModelTestMetric = mongoose.models.ModelTestMetric;
     const bertCount = ModelTestMetric ? await ModelTestMetric.countDocuments({ model_type: 'bert' }) : 0;
     const robertaCount = ModelTestMetric ? await ModelTestMetric.countDocuments({ model_type: 'roberta' }) : 0;
 
+    const endTime = Date.now();
+
     return res.json({
-      status: 'connected',
-      model_service_url: MODEL_SERVICE_URL,
+      status: 'mock_mode',
+      model_service_url: 'Not available in production',
       response_time_ms: endTime - startTime,
-      model_service_status: response.data,
+      model_service_status: {
+        status: 'mock_mode',
+        model_status: 'not_available',
+        note: 'The model service is only available when running locally'
+      },
       test_metrics: {
         bert_tests_count: bertCount,
         roberta_tests_count: robertaCount,
@@ -198,14 +140,12 @@ router.get('/model-service-health', async (req, res) => {
       server_time: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Error checking model service health:', error.message);
-    console.error('Error details:', error.response?.data || error.code || 'No additional details');
+    console.error('Error generating mock health status:', error.message);
 
     return res.status(500).json({
-      status: 'disconnected',
-      model_service_url: MODEL_SERVICE_URL,
+      status: 'error',
       error: error.message,
-      error_code: error.code || 'UNKNOWN',
+      note: 'The model service is only available when running locally',
       server_time: new Date().toISOString()
     });
   }

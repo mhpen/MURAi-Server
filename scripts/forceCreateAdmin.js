@@ -12,10 +12,12 @@ const forceCreateAdmin = async () => {
 
     // Force delete any existing admin
     await mongoose.connection.db.collection('users').deleteMany({ email: 'admin@murai.com' });
-    
+
     // Create password hash
+    // Note: In production, you should use a more secure password
+    // This is just a placeholder for development
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('admin123', salt);
+    const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'admin123', salt);
 
     // Create admin directly in MongoDB
     const result = await mongoose.connection.db.collection('users').insertOne({
@@ -30,7 +32,7 @@ const forceCreateAdmin = async () => {
     });
 
     console.log('Admin created:', result);
-    
+
     // Verify the admin was created
     const admin = await mongoose.connection.db.collection('users').findOne({ email: 'admin@murai.com' });
     console.log('Admin verification:', admin);
@@ -42,4 +44,4 @@ const forceCreateAdmin = async () => {
   }
 };
 
-forceCreateAdmin(); 
+forceCreateAdmin();
